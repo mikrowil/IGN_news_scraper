@@ -1,6 +1,7 @@
 from abc import ABC
 
 import scrapy
+from scrapy.crawler import CrawlerProcess
 
 
 class IGNNewsUpdater(scrapy.Spider, ABC):
@@ -16,7 +17,19 @@ class IGNNewsUpdater(scrapy.Spider, ABC):
         SET_SELECTOR = '.content-item'
         for child in response.css(SET_SELECTOR):
             NAME_SELECTOR = '.item-title::text'
+            title = child.css(NAME_SELECTOR).get()
+            link = 'https://www.ign.com' + child.css('a::attr(href)').get()
             yield {
-                'Latest news Title': child.css(NAME_SELECTOR).get(),
-                'Link to': 'https://www.ign.com' + child.css('a::attr(href)').get()
+                'Latest news Title': title,
+                'Link to': link
             }
+
+
+process = CrawlerProcess(settings={
+    'FEED': {
+        "items.json": {"format": "json"},
+    }
+})
+
+process.crawl(IGNNewsUpdater)
+process.start()
